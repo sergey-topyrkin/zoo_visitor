@@ -3,13 +3,18 @@ from kazoo.client import KazooClient
 
 
 class ZooNode:
-    def __init__(self, name, zk):
+    def __init__(self, name, value, zk):
         self.name = name
+        self.value = value
         self.childs = list()
         print(name)
+        if(value[0] != None):
+            print(value[0].decode('UTF-8'))
+        print(value)
         children = zk.get_children(name)
         for child in children:
-            self.childs.append(ZooNode(name+"/"+child, zk))
+            self.childs.append(
+                ZooNode(name+"/"+child, zk.get(name+"/"+child), zk))
 
 
 class ZooModel:
@@ -24,4 +29,4 @@ class ZooModel:
         zk.start()
         children = zk.get_children('/')
         for child in children:
-            self.model.append(ZooNode("/"+child, zk))
+            self.model.append(ZooNode("/"+child, zk.get("/"+child), zk))
