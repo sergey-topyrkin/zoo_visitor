@@ -7,26 +7,29 @@ class ZooNode:
         self.name = name
         self.value = value
         self.childs = list()
-        print(name)
-        if(value[0] != None):
-            print(value[0].decode('UTF-8'))
-        print(value)
-        children = zk.get_children(name)
-        for child in children:
-            self.childs.append(
-                ZooNode(name+"/"+child, zk.get(name+"/"+child), zk))
+        self.zoo_client = zk
 
 
 class ZooModel:
     def __init__(self):
         self.host = '127.0.0.1:2181'
-        self.model = list()
 
     def initModel(self, host):
-        self.model.clear()
+        model = list()
         self.host = host
         zk = KazooClient(hosts=self.host)
         zk.start()
+        self.zoo_client = zk
         children = zk.get_children('/')
         for child in children:
-            self.model.append(ZooNode("/"+child, zk.get("/"+child), zk))
+            model.append(ZooNode("/"+child, zk.get("/"+child), zk))
+
+        return model
+
+    def get_childs(self, node_name):
+        children = self.zoo_client.get_children(node_name)
+        childs = list()
+        for child in children:
+            childs.append(
+                ZooNode(node_name+"/"+child, self.zoo_client.get(node_name+"/"+child), self.zoo_client))
+        return childs

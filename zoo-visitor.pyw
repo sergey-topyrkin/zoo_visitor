@@ -13,9 +13,9 @@ class ZooMainWindow(QtWidgets.QWidget):
 
         # self.tv.setHeaderHidden(True)
         self.rootitem1 = QtGui.QStandardItem('127.0.0.1:2181')
-        self.rootitem2 = QtGui.QStandardItem('')
 
         self.model = zoo_model.ZooModel()
+        self.root_nodes_count = 0
         # self.model.initModel()
 
         self.label = QtWidgets.QLabel("host:")
@@ -43,9 +43,9 @@ class ZooMainWindow(QtWidgets.QWidget):
         self.tv.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
     def selectPath(self, prevIndex, newIndex):
-        indexes = newIndex.indexes()
+        indexes = prevIndex.indexes()
         for ind in indexes:
-            print('-----> ' + ind.data())
+            print(ind.data())
 
     def setNewConnect(self):
         self.rootitem1.removeRows(0, self.rootitem1.rowCount())
@@ -60,26 +60,47 @@ class ZooMainWindow(QtWidgets.QWidget):
                 data = child.value[0].decode('UTF-8')
             item2 = QtGui.QStandardItem(data)
             row.appendRow([item, item2])
-            self.appendChilds(item, child)
+
+    def appendChildRow(self, row, row_name, row_data, model):
+        appended = QtGui.QStandardItem(row_name)
+        appended.setData("model", QtCore.Qt.UserRole + 1)
+        appended.appendRow(
+            [QtGui.QStandardItem("1"), QtGui.QStandardItem("1")])
+        row.appendRow([appended,
+                       QtGui.QStandardItem(row_data)])
+
+    def itemExpand(self, modelIndex):
+        self.setCursor(QtCore.Qt.WaitCursor)
+        modelData = modelIndex.data(QtCore.Qt.UserRole + 1)
+        currItem = self.sti.itemFromIndex(modelIndex)
+
+        if(modelData == "model" and currItem.hasChildren()):
+            currItem.removeRows(0, currItem.rowCount())
+            childs = self.model.get_childs(currItem.text())
+            for node in childs:
+                data = ""
+                if(node.value[0] != None):
+                    data = node.value[0].decode('UTF-8')
+                    self.appendChildRow(currItem, node.name, data, node)
+        self.unsetCursor()
 
     def initModel(self, host):
-        self.model.initModel(host)
-        for node in self.model.model:
-            item1 = QtGui.QStandardItem(node.name)
+        nodes = self.model.initModel(host)
+        self.root_nodes_count = len(nodes)
+
+        for node in nodes:
             data = ""
             if(node.value[0] != None):
                 data = node.value[0].decode('UTF-8')
-            item2 = QtGui.QStandardItem(data)
-            self.appendChilds(item1, node)
-            self.rootitem1.appendRow([item1, item2])
+                self.appendChildRow(self.rootitem1, node.name, data, node)
 
-        self.sti.removeRows(1, len(self.model.model))
+        self.sti.removeRows(1, self.root_nodes_count)
         self.sti.appendRow([self.rootitem1])
-        self.sti.appendRow([self.rootitem2])
         self.sti.setHorizontalHeaderLabels([host, 'data'])
         self.tv.setModel(self.sti)
         self.tv.setSelectionModel(QtCore.QItemSelectionModel())
         self.tv.selectionModel().selectionChanged.connect(self.selectPath)
+        self.tv.expanded.connect(self.itemExpand)
 
 
 app = QtWidgets.QApplication(sys.argv)
