@@ -33,3 +33,9 @@ class ZooModel:
             childs.append(
                 ZooNode(node_name+"/"+child, self.zoo_client.get(node_name+"/"+child), self.zoo_client))
         return childs
+
+    def updateNodeData(self, node_name, node_data):
+        if(self.zoo_client.exists(node_name) == None):
+            return
+        self.zoo_client.set(node_name, node_data)
+
