@@ -29,6 +29,7 @@ class ZooTreeView(QtWidgets.QTreeView):
         self.selectionModel().selectionChanged.connect(self.selectPath)
         self.expanded.connect(self.itemExpand)
         self.sti.itemChanged.connect(self.itemChanged)
+        self.setColumnWidth(0, 500)
 
     def itemChanged(self, changedItem):
         changedData = changedItem.text()

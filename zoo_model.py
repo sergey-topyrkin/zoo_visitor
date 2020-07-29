@@ -39,3 +39,9 @@ class ZooModel:
             return
         self.zoo_client.set(node_name, node_data)
 
+    def executeCommand(self, command):
+        if command.command == 'create':
+            if command.data:
+                self.zoo_client.create(command.path, command.data.encode())
+            else:
+                self.zoo_client.create(command.path)
